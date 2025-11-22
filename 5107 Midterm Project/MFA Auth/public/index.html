@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureAuth - Modern MFA Protection</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
+    <div class="container">
+        <!-- Hero/Welcome Section -->
+        <div id="welcome-section" class="card hero-card">
+            <div class="card-header">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>SecureAuth</span>
+                </div>
+                <h1>Protect Your Digital Identity</h1>
+                <p class="hero-subtitle">Multi-factor authentication for ultimate security</p>
+            </div>
+            <div class="card-body">
+                <div class="feature-grid">
+                    <div class="feature">
+                        <i class="fas fa-qrcode"></i>
+                        <h3>QR Code Setup</h3>
+                        <p>Easy setup with Google or Microsoft Authenticator</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-mobile-alt"></i>
+                        <h3>Mobile Friendly</h3>
+                        <p>Works seamlessly on all your devices</p>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-lock"></i>
+                        <h3>Bank-Level Security</h3>
+                        <p>Enterprise-grade protection for your accounts</p>
+                    </div>
+                </div>
+                <div class="cta-buttons">
+                    <button id="get-started" class="btn btn-primary btn-large">
+                        <span>Get Started</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button id="already-have-account" class="btn btn-secondary">
+                        I Already Have an Account
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Form -->
+        <div id="register-section" class="card auth-card hidden">
+            <div class="card-header">
+                <div class="back-button" id="back-to-welcome-from-register">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <h2>Create Your Account</h2>
+                <p>Join thousands of protected users</p>
+            </div>
+            <div class="card-body">
+                <div id="register-alert" class="alert hidden"></div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="reg-username">
+                            <i class="fas fa-user"></i>
+                            Username
+                        </label>
+                        <input type="text" id="reg-username" placeholder="Enter your username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">
+                            <i class="fas fa-key"></i>
+                            Password
+                        </label>
+                        <div class="password-input-container">
+                            <input type="password" id="reg-password" placeholder="Create a strong password" required>
+                            <button type="button" class="password-toggle" id="toggle-reg-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="password-strength-fill"></div>
+                            </div>
+                            <span class="strength-text" id="password-strength-text">Weak</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-confirm-password">
+                            <i class="fas fa-check-circle"></i>
+                            Confirm Password
+                        </label>
+                        <div class="password-input-container">
+                            <input type="password" id="reg-confirm-password" placeholder="Confirm your password" required>
+                            <button type="button" class="password-toggle" id="toggle-reg-confirm-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span>Create Account</span>
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                </form>
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="#" id="show-login-from-register" class="auth-link">Sign In</a></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login Form -->
+        <div id="login-section" class="card auth-card hidden">
+            <div class="card-header">
+                <div class="back-button" id="back-to-welcome-from-login">
+                    <i class="fas fa-arrow-left"></i>
+                </div>
+                <h2>Welcome Back</h2>
+                <p>Sign in to your secure account</p>
+            </div>
+            <div class="card-body">
+                <div id="login-alert" class="alert hidden"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-username">
+                            <i class="fas fa-user"></i>
+                            Username
+                        </label>
+                        <input type="text" id="login-username" placeholder="Enter your username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">
+                            <i class="fas fa-key"></i>
+                            Password
+                        </label>
+                        <div class="password-input-container">
+                            <input type="password" id="login-password" placeholder="Enter your password" required>
+                            <button type="button" class="password-toggle" id="toggle-login-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span>Sign In</span>
+                        <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                </form>
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="#" id="show-register-from-login" class="auth-link">Create Account</a></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MFA Setup -->
+        <div id="mfa-setup-section" class="card auth-card hidden">
+            <div class="card-header">
+                <h2>Enhanced Security</h2>
+                <p>Set up Multi-Factor Authentication</p>
+            </div>
+            <div class="card-body">
+                <div class="step-indicator">
+                    <div class="step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-line completed"></div>
+                    <div class="step active">
+                        <span>2</span>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <div class="instruction-header">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Secure Your Account</h3>
+                    </div>
+                    <ol class="instruction-steps">
+                        <li>
+                            <div class="step-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Install Authenticator</h4>
+                                <p>Get Google Authenticator or Microsoft Authenticator on your phone</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-icon">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Scan QR Code</h4>
+                                <p>Point your camera at the QR code below</p>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="step-icon">
+                                <i class="fas fa-keyboard"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Enter Code</h4>
+                                <p>Type the 6-digit code from the app</p>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+                
+                <div class="qr-container">
+                    <div class="qr-frame">
+                        <div id="qrcode">
+                            <div class="qr-placeholder">
+                                <div>
+                                    <i class="fas fa-qrcode fa-2x"></i>
+                                    <p>QR Code will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="qr-note">Scan with your authenticator app</p>
+                    <div id="manual-setup" class="manual-setup hidden">
+                        <h4>Manual Setup</h4>
+                        <p>If QR code doesn't work, use this secret key:</p>
+                        <div class="secret-key">
+                            <code id="manual-secret"></code>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="mfa-setup-alert" class="alert hidden"></div>
+                
+                <form id="mfa-setup-form">
+                    <div class="form-group">
+                        <label for="mfa-code">
+                            <i class="fas fa-mobile-alt"></i>
+                            6-digit Verification Code
+                        </label>
+                        <input type="text" id="mfa-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter 6-digit code" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span>Verify & Complete Setup</span>
+                        <i class="fas fa-check-circle"></i>
+                    </button>
+                </form>
+                
+                <div class="skip-option">
+                    <a href="#" id="skip-mfa" class="skip-link">
+                        <i class="fas fa-forward"></i>
+                        Skip for now (not recommended)
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MFA Verification -->
+        <div id="mfa-verify-section" class="card auth-card hidden">
+            <div class="card-header">
+                <h2>Verify Your Identity</h2>
+                <p>Additional security step required</p>
+            </div>
+            <div class="card-body">
+                <div class="step-indicator">
+                    <div class="step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-line completed"></div>
+                    <div class="step active">
+                        <span>2</span>
+                    </div>
+                </div>
+                
+                <div class="verification-prompt">
+                    <div class="verification-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Check Your Authenticator App</h3>
+                    <p>Open Google Authenticator or Microsoft Authenticator and enter the 6-digit code below</p>
+                </div>
+                
+                <div id="mfa-verify-alert" class="alert hidden"></div>
+                
+                <form id="mfa-verify-form">
+                    <div class="form-group">
+                        <label for="verify-code">
+                            <i class="fas fa-shield-alt"></i>
+                            6-digit Code
+                        </label>
+                        <input type="text" id="verify-code" maxlength="6" pattern="[0-9]{6}" placeholder="Enter 6-digit code" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span>Verify Identity</span>
+                        <i class="fas fa-fingerprint"></i>
+                    </button>
+                </form>
+                
+                <div class="back-option">
+                    <a href="#" id="back-to-login" class="back-link">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to Sign In
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard -->
+        <div id="dashboard-section" class="card dashboard-card hidden">
+            <div class="card-header">
+                <div class="user-welcome">
+                    <h2 id="welcome-user">Welcome back, User!</h2>
+                    <p>Your account is securely protected</p>
+                </div>
+                <div class="user-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card security-status">
+                        <div class="card-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Security Status</h3>
+                        <div class="status-indicator">
+                            <span id="mfa-status" class="status-badge active">MFA Active</span>
+                        </div>
+                        <p>Multi-factor authentication is protecting your account</p>
+                    </div>
+                    
+                    <div class="dashboard-card account-info">
+                        <div class="card-icon">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <h3>Account Info</h3>
+                        <div class="info-item">
+                            <span class="info-label">Username:</span>
+                            <span id="dashboard-username" class="info-value">user123</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Last Login:</span>
+                            <span class="info-value" id="last-login">Just now</span>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card quick-actions">
+                        <div class="card-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3>Quick Actions</h3>
+                        <button class="action-btn">
+                            <i class="fas fa-key"></i>
+                            Change Password
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-qrcode"></i>
+                            Reset MFA
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="dashboard-footer">
+                    <button id="logout-btn" class="btn btn-secondary">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Log Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="spinner hidden">
+        <div class="spinner-icon">
+            <i class="fas fa-spinner fa-spin"></i>
+        </div>
+        <p>Securing your account...</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="lib/otpauth.umd.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/mfa.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
