@@ -1,3 +1,4 @@
+// server/server.js
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -8,12 +9,8 @@ const qr = require('qr-image');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - fix CORS issues
-app.use(cors({
-    origin: '*', // In production, replace with your actual domain
-    methods: ['GET', 'POST'],
-    credentials: false
-}));
+// Middleware
+app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -28,6 +25,17 @@ let sessions = {};
 
 // API Routes
 
+// Health check endpoint - important for Replit
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        usersCount: users.length,
+        sessionsCount: Object.keys(sessions).length,
+        message: 'Server is running correctly!'
+    });
+});
+
 // User registration
 app.post('/api/register', (req, res) => {
     try {
@@ -39,16 +47,14 @@ app.post('/api/register', (req, res) => {
             return res.status(400).json({ error: 'Username and password required' });
         }
         
-        // Check if user already exists
         if (users.find(user => user.username === username)) {
             return res.status(400).json({ error: 'Username already exists' });
         }
         
-        // Create new user
         const newUser = {
             id: Date.now().toString(),
             username,
-            password, // In production, hash this!
+            password,
             mfaEnabled: false,
             mfaSecret: null,
             createdAt: new Date().toISOString()
@@ -78,7 +84,6 @@ app.post('/api/login', (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
-        // Create session
         const sessionId = generateSessionId();
         sessions[sessionId] = {
             userId: user.id,
@@ -116,16 +121,15 @@ app.post('/api/mfa/generate', (req, res) => {
             issuer: 'SecureApp'
         });
         
-        // Store temporary secret in session
         sessions[sessionId].tempSecret = secret.base32;
         
-        // Generate QR code as PNG instead of SVG
+        // Generate QR code
         const qrCode = qr.imageSync(secret.otpauth_url, { type: 'png' });
         
         res.json({
             secret: secret.base32,
             qrCode: qrCode.toString('base64'),
-            qrCodeType: 'png' // Add type information
+            qrCodeType: 'png'
         });
     } catch (error) {
         console.error('MFA generation error:', error);
@@ -150,7 +154,6 @@ app.post('/api/mfa/verify-setup', (req, res) => {
         });
         
         if (verified) {
-            // Enable MFA for user
             const session = sessions[sessionId];
             const user = users.find(u => u.id === session.userId);
             
@@ -254,34 +257,25 @@ app.post('/api/logout', (req, res) => {
     }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        usersCount: users.length,
-        sessionsCount: Object.keys(sessions).length
-    });
-});
-
 // Helper function to generate session ID
 function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-// Error handling middleware
-app.use((error, req, res, next) => {
-    console.error('Unhandled error:', error);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({ error: 'Endpoint not found' });
-});
-
+// Start server
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Visit: http://localhost:${PORT}`);
-    console.log('Server is accessible from:', `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+    console.log('=== MFA Authentication Server Started ===');
+    console.log(`Server running on port: ${PORT}`);
+    console.log(`Local: http://localhost:${PORT}`);
+    console.log(`Replit: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+    console.log('=========================================');
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
