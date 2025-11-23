@@ -1,4 +1,4 @@
-//server/server.js
+// server/server.js
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -168,7 +168,14 @@ app.post('/api/mfa/verify-setup', (req, res) => {
                 console.log('MFA enabled for user:', user.username);
             }
             
-            res.json({ success: true, message: 'MFA enabled successfully' });
+            res.json({ 
+                success: true, 
+                message: 'MFA enabled successfully',
+                user: {
+                    username: user.username,
+                    mfaEnabled: user.mfaEnabled
+                }
+            });
         } else {
             res.status(400).json({ error: 'Invalid verification code' });
         }
@@ -268,7 +275,14 @@ app.post('/api/mfa/reset', (req, res) => {
         user.mfaSecret = null;
         
         console.log('MFA reset for user:', user.username);
-        res.json({ success: true, message: 'MFA has been reset successfully' });
+        res.json({ 
+            success: true, 
+            message: 'MFA has been reset successfully',
+            user: {
+                username: user.username,
+                mfaEnabled: false
+            }
+        });
     } catch (error) {
         console.error('MFA reset error:', error);
         res.status(500).json({ error: 'Internal server error' });

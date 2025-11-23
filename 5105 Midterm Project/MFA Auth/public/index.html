@@ -232,12 +232,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- OTP Timer for Setup -->
-                <div class="otp-timer">
-                    <div class="timer-text">Current code expires in:</div>
-                    <div id="timer-display-setup" class="timer-display">30s</div>
-                </div>
                 
                 <div id="mfa-setup-alert" class="alert hidden"></div>
                 
@@ -287,17 +281,6 @@
                     </div>
                     <h3>Check Your Authenticator App</h3>
                     <p>Open Google Authenticator or Microsoft Authenticator and enter the 6-digit code below</p>
-                </div>
-
-                <!-- OTP Timer -->
-                <div class="otp-timer">
-                    <div class="timer-text">Current code expires in:</div>
-                    <div id="timer-display" class="timer-display">30s</div>
-                    <div class="resend-otp">
-                        <button id="resend-otp-btn" class="resend-btn" disabled>
-                            Wait for new code...
-                        </button>
-                    </div>
                 </div>
                 
                 <div id="mfa-verify-alert" class="alert hidden"></div>
@@ -469,8 +452,8 @@
             <div class="modal-body">
                 <div class="warning-message">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <h4>Are you sure?</h4>
-                    <p>Resetting MFA will disable two-factor authentication for your account. You'll need to set it up again the next time you log in.</p>
+                    <h4>Security Warning</h4>
+                    <p>Resetting MFA will disable two-factor authentication for your account. You will need to set it up again if you want to re-enable it.</p>
                 </div>
                 <div id="reset-mfa-alert" class="alert hidden"></div>
                 <div class="modal-actions">

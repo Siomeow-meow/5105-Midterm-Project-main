@@ -17,22 +17,18 @@ class MFAService {
             });
             
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             return await response.json();
         } catch (error) {
             console.error('MFA request failed:', error);
-            throw new Error(error.message || 'Network error: Unable to connect to server');
+            throw new Error('Network error: Unable to connect to server');
         }
     }
 
     static async generateSecret() {
         const sessionId = AuthService.getSessionId();
-        if (!sessionId) {
-            throw new Error('No active session found');
-        }
         return await this.makeRequest('/api/mfa/generate', {
             method: 'POST',
             body: JSON.stringify({ sessionId })
@@ -41,9 +37,6 @@ class MFAService {
 
     static async verifySetup(token) {
         const sessionId = AuthService.getSessionId();
-        if (!sessionId) {
-            throw new Error('No active session found');
-        }
         return await this.makeRequest('/api/mfa/verify-setup', {
             method: 'POST',
             body: JSON.stringify({ sessionId, token })
@@ -52,9 +45,6 @@ class MFAService {
 
     static async verifyLogin(token) {
         const sessionId = AuthService.getSessionId();
-        if (!sessionId) {
-            throw new Error('No active session found');
-        }
         return await this.makeRequest('/api/mfa/verify-login', {
             method: 'POST',
             body: JSON.stringify({ sessionId, token })
@@ -63,9 +53,6 @@ class MFAService {
 
     static async resetMFA() {
         const sessionId = AuthService.getSessionId();
-        if (!sessionId) {
-            throw new Error('No active session found');
-        }
         return await this.makeRequest('/api/mfa/reset', {
             method: 'POST',
             body: JSON.stringify({ sessionId })

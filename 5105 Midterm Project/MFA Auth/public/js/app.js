@@ -40,8 +40,6 @@ class App {
 
     setupEventListeners() {
         try {
-            console.log('Setting up event listeners...');
-            
             // Welcome section buttons
             const getStartedBtn = document.getElementById('get-started');
             const alreadyHaveAccountBtn = document.getElementById('already-have-account');
@@ -119,7 +117,6 @@ class App {
             const resendOtpBtn = document.getElementById('resend-otp-btn');
             if (resendOtpBtn) {
                 resendOtpBtn.addEventListener('click', () => {
-                    console.log('Resend OTP clicked');
                     // Clear the input field to encourage entering new code
                     const verifyCodeInput = document.getElementById('verify-code');
                     if (verifyCodeInput) {
@@ -155,7 +152,6 @@ class App {
                 logoutBtn.addEventListener('click', () => this.handleLogout());
             }
 
-            console.log('Event listeners setup complete');
         } catch (error) {
             console.error('Error setting up event listeners:', error);
         }
@@ -237,22 +233,14 @@ class App {
     }
 
     setupModals() {
-        console.log('Setting up modals...');
-        
         // Change Password Modal
         const changePasswordBtn = document.getElementById('change-password-btn');
         const changePasswordModal = document.getElementById('change-password-modal');
         const closeChangePasswordModal = document.getElementById('close-change-password-modal');
         const cancelChangePassword = document.getElementById('cancel-change-password');
 
-        if (changePasswordBtn) {
-            console.log('Change password button found');
-            changePasswordBtn.addEventListener('click', () => {
-                console.log('Change password button clicked');
-                this.showModal('change-password-modal');
-            });
-        } else {
-            console.error('Change password button not found');
+        if (changePasswordBtn && changePasswordModal) {
+            changePasswordBtn.addEventListener('click', () => this.showModal('change-password-modal'));
         }
 
         if (closeChangePasswordModal) {
@@ -270,14 +258,8 @@ class App {
         const cancelResetMfa = document.getElementById('cancel-reset-mfa');
         const confirmResetMfa = document.getElementById('confirm-reset-mfa');
 
-        if (resetMfaBtn) {
-            console.log('Reset MFA button found');
-            resetMfaBtn.addEventListener('click', () => {
-                console.log('Reset MFA button clicked');
-                this.showModal('reset-mfa-modal');
-            });
-        } else {
-            console.error('Reset MFA button not found');
+        if (resetMfaBtn && resetMfaModal) {
+            resetMfaBtn.addEventListener('click', () => this.showModal('reset-mfa-modal'));
         }
 
         if (closeResetMfaModal) {
@@ -306,8 +288,6 @@ class App {
 
         // Modal password toggles
         this.setupModalPasswordToggles();
-        
-        console.log('Modals setup complete');
     }
 
     setupModalPasswordToggles() {
@@ -338,13 +318,9 @@ class App {
     }
 
     showModal(modalId) {
-        console.log(`Showing modal: ${modalId}`);
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('hidden');
-            console.log(`Modal ${modalId} shown`);
-        } else {
-            console.error(`Modal with id ${modalId} not found`);
         }
     }
 
@@ -366,28 +342,21 @@ class App {
 
     // OTP Timer functionality
     startOtpTimer() {
-        console.log('Starting OTP timer...');
         const timerElement = document.getElementById('otp-timer');
         const setupTimerElement = document.getElementById('timer-display-setup');
         
-        if (!timerElement && !setupTimerElement) {
-            console.log('No OTP timer elements found');
-            return;
-        }
+        if (!timerElement && !setupTimerElement) return;
 
         this.updateOtpTimer();
         this.otpTimerInterval = setInterval(() => {
             this.updateOtpTimer();
         }, 1000);
-        
-        console.log('OTP timer started');
     }
 
     stopOtpTimer() {
         if (this.otpTimerInterval) {
             clearInterval(this.otpTimerInterval);
             this.otpTimerInterval = null;
-            console.log('OTP timer stopped');
         }
     }
 
@@ -395,8 +364,6 @@ class App {
         try {
             const result = await MFAService.getRemainingTime();
             const remainingTime = result.remainingTime;
-            
-            console.log(`OTP remaining time: ${remainingTime}s`);
             
             // Update verification timer
             const timerDisplay = document.getElementById('timer-display');
@@ -418,10 +385,8 @@ class App {
                 resendBtn.disabled = remainingTime > 5; // Enable when 5 seconds or less
                 if (remainingTime <= 5) {
                     resendBtn.textContent = 'Get new code';
-                    resendBtn.style.color = 'var(--primary)';
                 } else {
-                    resendBtn.textContent = `Wait ${remainingTime}s`;
-                    resendBtn.style.color = 'var(--gray)';
+                    resendBtn.textContent = 'Wait for new code...';
                 }
             }
 
@@ -452,8 +417,6 @@ class App {
 
     showSection(sectionId) {
         try {
-            console.log(`Showing section: ${sectionId}`);
-            
             // Stop OTP timer when leaving MFA sections
             if (sectionId !== 'mfa-setup-section' && sectionId !== 'mfa-verify-section') {
                 this.stopOtpTimer();
@@ -489,12 +452,8 @@ class App {
                     this.setupPasswordStrength();
                 } else if (sectionId === 'mfa-setup-section' || sectionId === 'mfa-verify-section') {
                     // Start OTP timer for MFA sections
-                    setTimeout(() => {
-                        this.startOtpTimer();
-                    }, 100);
+                    this.startOtpTimer();
                 }
-                
-                console.log(`Section ${sectionId} shown successfully`);
             } else {
                 console.warn(`Section with id '${sectionId}' not found`);
                 // Fallback to welcome section
@@ -718,14 +677,10 @@ class App {
             this.showAlert('mfa-setup-alert', 'Failed to generate QR code: ' + error.message);
             
             // Fallback: show manual setup
-            try {
-                const result = await MFAService.generateSecret();
-                if (result.secret) {
-                    MFAService.displayManualSetup(result.secret);
-                    this.showSection('mfa-setup-section');
-                }
-            } catch (fallbackError) {
-                console.error('Fallback MFA setup also failed:', fallbackError);
+            const result = await MFAService.generateSecret();
+            if (result.secret) {
+                MFAService.displayManualSetup(result.secret);
+                this.showSection('mfa-setup-section');
             }
         } finally {
             this.showLoading(false);
@@ -744,13 +699,9 @@ class App {
                 throw new Error('Please enter a valid 6-digit code');
             }
 
-            await MFAService.verifySetup(code);
+            const result = await MFAService.verifySetup(code);
+            this.currentUser = result.user; // Update user with MFA status
             this.showAlert('mfa-setup-alert', 'MFA setup successful!', 'success');
-            
-            // Update current user's MFA status
-            if (this.currentUser) {
-                this.currentUser.mfaEnabled = true;
-            }
             
             setTimeout(() => {
                 this.showDashboard(this.currentUser);
@@ -776,6 +727,7 @@ class App {
             }
 
             const result = await MFAService.verifyLogin(code);
+            this.currentUser = result.user; // Update user data
             this.showDashboard(result.user);
         } catch (error) {
             this.showAlert('mfa-verify-alert', error.message);
@@ -786,6 +738,7 @@ class App {
 
     async handleChangePassword(e) {
         e.preventDefault();
+        this.setLoading('change-password-form', true);
         
         const currentPassword = document.getElementById('current-password').value;
         const newPassword = document.getElementById('new-password').value;
@@ -817,22 +770,23 @@ class App {
 
         } catch (error) {
             this.showAlert('change-password-alert', error.message);
+        } finally {
+            this.setLoading('change-password-form', false);
         }
     }
 
     async handleResetMfa() {
         try {
-            console.log('Resetting MFA...');
-            await MFAService.resetMFA();
+            this.setLoading('reset-mfa-form', true);
+            const result = await MFAService.resetMFA();
+            
+            // Update current user with new MFA status
+            this.currentUser = result.user;
             
             this.showAlert('reset-mfa-alert', 'MFA reset successfully!', 'success');
             
-            // Update dashboard status
-            if (this.currentUser) {
-                this.currentUser.mfaEnabled = false;
-                // Force refresh the dashboard to show updated status
-                this.showDashboard(this.currentUser);
-            }
+            // Update dashboard status immediately
+            this.showDashboard(this.currentUser);
             
             // Close modal after delay
             setTimeout(() => {
@@ -840,8 +794,9 @@ class App {
             }, 2000);
 
         } catch (error) {
-            console.error('MFA reset error:', error);
             this.showAlert('reset-mfa-alert', error.message);
+        } finally {
+            this.setLoading('reset-mfa-form', false);
         }
     }
 
@@ -861,8 +816,6 @@ class App {
                 return;
             }
 
-            console.log('Showing dashboard for user:', user);
-            
             document.getElementById('welcome-user').textContent = `Welcome back, ${user.username}!`;
             document.getElementById('dashboard-username').textContent = user.username;
             
@@ -877,18 +830,13 @@ class App {
                 if (user.mfaEnabled) {
                     mfaStatusElement.textContent = 'MFA Active';
                     mfaStatusElement.className = 'status-badge active';
-                    console.log('MFA status set to active (green)');
                 } else {
                     mfaStatusElement.textContent = 'MFA Inactive';
                     mfaStatusElement.className = 'status-badge inactive';
-                    console.log('MFA status set to inactive (red)');
                 }
-            } else {
-                console.error('MFA status element not found');
             }
             
             this.showSection('dashboard-section');
-            console.log('Dashboard shown successfully');
         } catch (error) {
             console.error('Error showing dashboard:', error);
             this.showSection('login-section');
@@ -936,14 +884,12 @@ class App {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app...');
     new App();
 });
 
 // Fallback initialization
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(() => {
-        console.log('Fallback initialization...');
         new App();
     }, 1);
 }
