@@ -20,13 +20,14 @@ class AuthService {
             });
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
             
             return await response.json();
         } catch (error) {
             console.error('Request failed:', error);
-            throw new Error('Network error: Unable to connect to server. Please make sure the server is running.');
+            throw new Error(error.message || 'Network error: Unable to connect to server. Please make sure the server is running.');
         }
     }
 
@@ -82,6 +83,9 @@ class AuthService {
 
     static async changePassword(currentPassword, newPassword) {
         const sessionId = this.getSessionId();
+        if (!sessionId) {
+            throw new Error('No active session found');
+        }
         return await this.makeRequest('/api/user/change-password', {
             method: 'PUT',
             body: JSON.stringify({ sessionId, currentPassword, newPassword })
