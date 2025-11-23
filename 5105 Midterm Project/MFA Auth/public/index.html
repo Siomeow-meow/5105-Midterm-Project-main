@@ -232,6 +232,12 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- OTP Timer for Setup -->
+                <div class="otp-timer">
+                    <div class="timer-text">Current code expires in:</div>
+                    <div id="timer-display-setup" class="timer-display">30s</div>
+                </div>
                 
                 <div id="mfa-setup-alert" class="alert hidden"></div>
                 
@@ -281,6 +287,17 @@
                     </div>
                     <h3>Check Your Authenticator App</h3>
                     <p>Open Google Authenticator or Microsoft Authenticator and enter the 6-digit code below</p>
+                </div>
+
+                <!-- OTP Timer -->
+                <div class="otp-timer">
+                    <div class="timer-text">Current code expires in:</div>
+                    <div id="timer-display" class="timer-display">30s</div>
+                    <div class="resend-otp">
+                        <button id="resend-otp-btn" class="resend-btn" disabled>
+                            Wait for new code...
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="mfa-verify-alert" class="alert hidden"></div>
@@ -352,11 +369,11 @@
                             <i class="fas fa-bolt"></i>
                         </div>
                         <h3>Quick Actions</h3>
-                        <button class="action-btn">
+                        <button class="action-btn" id="change-password-btn">
                             <i class="fas fa-key"></i>
                             Change Password
                         </button>
-                        <button class="action-btn">
+                        <button class="action-btn" id="reset-mfa-btn">
                             <i class="fas fa-qrcode"></i>
                             Reset MFA
                         </button>
@@ -367,6 +384,101 @@
                     <button id="logout-btn" class="btn btn-secondary">
                         <i class="fas fa-sign-out-alt"></i>
                         Log Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-password-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Change Password</h3>
+                <button class="modal-close" id="close-change-password-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="change-password-alert" class="alert hidden"></div>
+                <form id="change-password-form">
+                    <div class="form-group">
+                        <label for="current-password">
+                            <i class="fas fa-key"></i>
+                            Current Password
+                        </label>
+                        <div class="password-input-container">
+                            <input type="password" id="current-password" placeholder="Enter current password" required>
+                            <button type="button" class="password-toggle" id="toggle-current-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">
+                            <i class="fas fa-lock"></i>
+                            New Password
+                        </label>
+                        <div class="password-input-container">
+                            <input type="password" id="new-password" placeholder="Enter new password" required>
+                            <button type="button" class="password-toggle" id="toggle-new-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-fill" id="new-password-strength-fill"></div>
+                            </div>
+                            <span class="strength-text" id="new-password-strength-text">Weak</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-new-password">
+                            <i class="fas fa-check-circle"></i>
+                            Confirm New Password
+                        </label>
+                        <div class="password-input-container">
+                            <input type="password" id="confirm-new-password" placeholder="Confirm new password" required>
+                            <button type="button" class="password-toggle" id="toggle-confirm-new-password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancel-change-password">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Change Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset MFA Modal -->
+    <div id="reset-mfa-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reset Multi-Factor Authentication</h3>
+                <button class="modal-close" id="close-reset-mfa-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h4>Are you sure?</h4>
+                    <p>Resetting MFA will disable two-factor authentication for your account. You'll need to set it up again the next time you log in.</p>
+                </div>
+                <div id="reset-mfa-alert" class="alert hidden"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancel-reset-mfa">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirm-reset-mfa">
+                        Reset MFA
                     </button>
                 </div>
             </div>

@@ -3,6 +3,7 @@
 class App {
     constructor() {
         this.currentUser = null;
+        this.otpTimerInterval = null;
         this.init();
     }
 
@@ -112,6 +113,22 @@ class App {
             // Password toggle functionality
             this.setupPasswordToggles();
 
+            // OTP Resend functionality
+            const resendOtpBtn = document.getElementById('resend-otp-btn');
+            if (resendOtpBtn) {
+                resendOtpBtn.addEventListener('click', () => {
+                    // Clear the input field to encourage entering new code
+                    const verifyCodeInput = document.getElementById('verify-code');
+                    if (verifyCodeInput) {
+                        verifyCodeInput.value = '';
+                        verifyCodeInput.focus();
+                    }
+                });
+            }
+
+            // Modal functionality
+            this.setupModals();
+
             // MFA actions
             const skipMfaLink = document.getElementById('skip-mfa');
             const backToLoginLink = document.getElementById('back-to-login');
@@ -215,8 +232,196 @@ class App {
         });
     }
 
+    setupModals() {
+        // Change Password Modal
+        const changePasswordBtn = document.getElementById('change-password-btn');
+        const changePasswordModal = document.getElementById('change-password-modal');
+        const closeChangePasswordModal = document.getElementById('close-change-password-modal');
+        const cancelChangePassword = document.getElementById('cancel-change-password');
+
+        if (changePasswordBtn && changePasswordModal) {
+            changePasswordBtn.addEventListener('click', () => this.showModal('change-password-modal'));
+        }
+
+        if (closeChangePasswordModal) {
+            closeChangePasswordModal.addEventListener('click', () => this.hideModal('change-password-modal'));
+        }
+
+        if (cancelChangePassword) {
+            cancelChangePassword.addEventListener('click', () => this.hideModal('change-password-modal'));
+        }
+
+        // Reset MFA Modal
+        const resetMfaBtn = document.getElementById('reset-mfa-btn');
+        const resetMfaModal = document.getElementById('reset-mfa-modal');
+        const closeResetMfaModal = document.getElementById('close-reset-mfa-modal');
+        const cancelResetMfa = document.getElementById('cancel-reset-mfa');
+        const confirmResetMfa = document.getElementById('confirm-reset-mfa');
+
+        if (resetMfaBtn && resetMfaModal) {
+            resetMfaBtn.addEventListener('click', () => this.showModal('reset-mfa-modal'));
+        }
+
+        if (closeResetMfaModal) {
+            closeResetMfaModal.addEventListener('click', () => this.hideModal('reset-mfa-modal'));
+        }
+
+        if (cancelResetMfa) {
+            cancelResetMfa.addEventListener('click', () => this.hideModal('reset-mfa-modal'));
+        }
+
+        if (confirmResetMfa) {
+            confirmResetMfa.addEventListener('click', () => this.handleResetMfa());
+        }
+
+        // Change Password Form
+        const changePasswordForm = document.getElementById('change-password-form');
+        if (changePasswordForm) {
+            changePasswordForm.addEventListener('submit', (e) => this.handleChangePassword(e));
+        }
+
+        // New password strength indicator
+        const newPasswordInput = document.getElementById('new-password');
+        if (newPasswordInput) {
+            newPasswordInput.addEventListener('input', (e) => this.updateNewPasswordStrength(e.target.value));
+        }
+
+        // Modal password toggles
+        this.setupModalPasswordToggles();
+    }
+
+    setupModalPasswordToggles() {
+        const modalPasswordToggles = [
+            { toggleId: 'toggle-current-password', inputId: 'current-password' },
+            { toggleId: 'toggle-new-password', inputId: 'new-password' },
+            { toggleId: 'toggle-confirm-new-password', inputId: 'confirm-new-password' }
+        ];
+
+        modalPasswordToggles.forEach(({ toggleId, inputId }) => {
+            const toggleButton = document.getElementById(toggleId);
+            const passwordInput = document.getElementById(inputId);
+            
+            if (toggleButton && passwordInput) {
+                toggleButton.addEventListener('click', () => {
+                    const isPassword = passwordInput.type === 'password';
+                    passwordInput.type = isPassword ? 'text' : 'password';
+                    
+                    const icon = toggleButton.querySelector('i');
+                    if (icon) {
+                        icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+                    }
+                    
+                    toggleButton.style.color = isPassword ? 'var(--primary)' : 'var(--gray)';
+                });
+            }
+        });
+    }
+
+    showModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    hideModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('hidden');
+            this.clearModalAlerts();
+        }
+    }
+
+    clearModalAlerts() {
+        const alerts = document.querySelectorAll('#change-password-alert, #reset-mfa-alert');
+        alerts.forEach(alert => {
+            alert.classList.add('hidden');
+            alert.textContent = '';
+        });
+    }
+
+    // OTP Timer functionality
+    startOtpTimer() {
+        const timerElement = document.getElementById('otp-timer');
+        const setupTimerElement = document.getElementById('timer-display-setup');
+        
+        if (!timerElement && !setupTimerElement) return;
+
+        this.updateOtpTimer();
+        this.otpTimerInterval = setInterval(() => {
+            this.updateOtpTimer();
+        }, 1000);
+    }
+
+    stopOtpTimer() {
+        if (this.otpTimerInterval) {
+            clearInterval(this.otpTimerInterval);
+            this.otpTimerInterval = null;
+        }
+    }
+
+    async updateOtpTimer() {
+        try {
+            const result = await MFAService.getRemainingTime();
+            const remainingTime = result.remainingTime;
+            
+            // Update verification timer
+            const timerDisplay = document.getElementById('timer-display');
+            const resendBtn = document.getElementById('resend-otp-btn');
+
+            if (timerDisplay) {
+                timerDisplay.textContent = `${remainingTime}s`;
+                
+                // Update color based on remaining time
+                timerDisplay.className = 'timer-display';
+                if (remainingTime <= 10) {
+                    timerDisplay.classList.add('timer-critical');
+                } else if (remainingTime <= 15) {
+                    timerDisplay.classList.add('timer-warning');
+                }
+            }
+
+            if (resendBtn) {
+                resendBtn.disabled = remainingTime > 5; // Enable when 5 seconds or less
+                if (remainingTime <= 5) {
+                    resendBtn.textContent = 'Get new code';
+                } else {
+                    resendBtn.textContent = 'Wait for new code...';
+                }
+            }
+
+            // Update setup timer
+            const setupTimerDisplay = document.getElementById('timer-display-setup');
+            if (setupTimerDisplay) {
+                setupTimerDisplay.textContent = `${remainingTime}s`;
+                
+                // Update color based on remaining time
+                setupTimerDisplay.className = 'timer-display';
+                if (remainingTime <= 10) {
+                    setupTimerDisplay.classList.add('timer-critical');
+                } else if (remainingTime <= 15) {
+                    setupTimerDisplay.classList.add('timer-warning');
+                }
+            }
+
+            if (remainingTime === 0) {
+                // Timer reached 0, reset
+                setTimeout(() => {
+                    this.updateOtpTimer();
+                }, 100);
+            }
+        } catch (error) {
+            console.error('Error updating OTP timer:', error);
+        }
+    }
+
     showSection(sectionId) {
         try {
+            // Stop OTP timer when leaving MFA sections
+            if (sectionId !== 'mfa-setup-section' && sectionId !== 'mfa-verify-section') {
+                this.stopOtpTimer();
+            }
+
             // Hide all sections
             const sections = [
                 'welcome-section',
@@ -245,6 +450,9 @@ class App {
                 // Special handling for specific sections
                 if (sectionId === 'register-section') {
                     this.setupPasswordStrength();
+                } else if (sectionId === 'mfa-setup-section' || sectionId === 'mfa-verify-section') {
+                    // Start OTP timer for MFA sections
+                    this.startOtpTimer();
                 }
             } else {
                 console.warn(`Section with id '${sectionId}' not found`);
@@ -323,6 +531,35 @@ class App {
     updatePasswordStrength(password) {
         const strengthFill = document.getElementById('password-strength-fill');
         const strengthText = document.getElementById('password-strength-text');
+        
+        if (!strengthFill || !strengthText) return;
+
+        let strength = 0;
+        let color = '#ef4444'; // red
+        let text = 'Weak';
+
+        if (password.length >= 8) strength += 25;
+        if (/[A-Z]/.test(password)) strength += 25;
+        if (/[0-9]/.test(password)) strength += 25;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+
+        if (strength >= 75) {
+            color = '#10b981'; // green
+            text = 'Strong';
+        } else if (strength >= 50) {
+            color = '#f59e0b'; // yellow
+            text = 'Medium';
+        }
+
+        strengthFill.style.width = `${strength}%`;
+        strengthFill.style.background = color;
+        strengthText.textContent = text;
+        strengthText.style.color = color;
+    }
+
+    updateNewPasswordStrength(password) {
+        const strengthFill = document.getElementById('new-password-strength-fill');
+        const strengthText = document.getElementById('new-password-strength-text');
         
         if (!strengthFill || !strengthText) return;
 
@@ -434,6 +671,7 @@ class App {
             }
             
             this.showSection('mfa-setup-section');
+            
         } catch (error) {
             console.error('MFA setup error:', error);
             this.showAlert('mfa-setup-alert', 'Failed to generate QR code: ' + error.message);
@@ -496,6 +734,64 @@ class App {
         }
     }
 
+    async handleChangePassword(e) {
+        e.preventDefault();
+        
+        const currentPassword = document.getElementById('current-password').value;
+        const newPassword = document.getElementById('new-password').value;
+        const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+        try {
+            // Validation
+            if (newPassword !== confirmNewPassword) {
+                throw new Error('New passwords do not match');
+            }
+
+            if (newPassword.length < 6) {
+                throw new Error('New password must be at least 6 characters');
+            }
+
+            if (currentPassword === newPassword) {
+                throw new Error('New password must be different from current password');
+            }
+
+            await AuthService.changePassword(currentPassword, newPassword);
+            
+            this.showAlert('change-password-alert', 'Password changed successfully!', 'success');
+            
+            // Clear form and close modal after delay
+            setTimeout(() => {
+                document.getElementById('change-password-form').reset();
+                this.hideModal('change-password-modal');
+            }, 2000);
+
+        } catch (error) {
+            this.showAlert('change-password-alert', error.message);
+        }
+    }
+
+    async handleResetMfa() {
+        try {
+            await MFAService.resetMFA();
+            
+            this.showAlert('reset-mfa-alert', 'MFA reset successfully!', 'success');
+            
+            // Update dashboard status
+            if (this.currentUser) {
+                this.currentUser.mfaEnabled = false;
+                this.showDashboard(this.currentUser);
+            }
+            
+            // Close modal after delay
+            setTimeout(() => {
+                this.hideModal('reset-mfa-modal');
+            }, 2000);
+
+        } catch (error) {
+            this.showAlert('reset-mfa-alert', error.message);
+        }
+    }
+
     skipMfa() {
         if (this.currentUser) {
             this.showDashboard(this.currentUser);
@@ -528,8 +824,7 @@ class App {
                     mfaStatusElement.className = 'status-badge active';
                 } else {
                     mfaStatusElement.textContent = 'MFA Inactive';
-                    mfaStatusElement.className = 'status-badge';
-                    mfaStatusElement.style.background = '#ef4444';
+                    mfaStatusElement.className = 'status-badge inactive';
                 }
             }
             

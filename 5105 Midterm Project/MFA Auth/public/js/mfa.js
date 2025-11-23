@@ -51,6 +51,18 @@ class MFAService {
         });
     }
 
+    static async resetMFA() {
+        const sessionId = AuthService.getSessionId();
+        return await this.makeRequest('/api/mfa/reset', {
+            method: 'POST',
+            body: JSON.stringify({ sessionId })
+        });
+    }
+
+    static async getRemainingTime() {
+        return await this.makeRequest('/api/mfa/remaining-time');
+    }
+
     static displayQRCode(qrCodeData) {
         const qrContainer = document.getElementById('qrcode');
         if (!qrContainer) {

@@ -80,6 +80,14 @@ class AuthService {
         }
     }
 
+    static async changePassword(currentPassword, newPassword) {
+        const sessionId = this.getSessionId();
+        return await this.makeRequest('/api/user/change-password', {
+            method: 'PUT',
+            body: JSON.stringify({ sessionId, currentPassword, newPassword })
+        });
+    }
+
     static getSessionId() {
         return localStorage.getItem('sessionId');
     }

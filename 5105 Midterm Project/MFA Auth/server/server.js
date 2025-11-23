@@ -7,10 +7,14 @@ const speakeasy = require('speakeasy');
 const qr = require('qr-image');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// Middleware - fix CORS issues
+app.use(cors({
+    origin: '*', // In production, replace with your actual domain
+    methods: ['GET', 'POST', 'PUT'],
+    credentials: false
+}));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -23,18 +27,13 @@ app.get('/', (req, res) => {
 let users = [];
 let sessions = {};
 
-// API Routes
+// Helper function to find user by session
+function getUserBySession(sessionId) {
+    if (!sessions[sessionId]) return null;
+    return users.find(u => u.id === sessions[sessionId].userId);
+}
 
-// Health check endpoint - important for Replit
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        usersCount: users.length,
-        sessionsCount: Object.keys(sessions).length,
-        message: 'Server is running correctly!'
-    });
-});
+// API Routes
 
 // User registration
 app.post('/api/register', (req, res) => {
@@ -47,14 +46,16 @@ app.post('/api/register', (req, res) => {
             return res.status(400).json({ error: 'Username and password required' });
         }
         
+        // Check if user already exists
         if (users.find(user => user.username === username)) {
             return res.status(400).json({ error: 'Username already exists' });
         }
         
+        // Create new user
         const newUser = {
             id: Date.now().toString(),
             username,
-            password,
+            password, // In production, hash this!
             mfaEnabled: false,
             mfaSecret: null,
             createdAt: new Date().toISOString()
@@ -84,6 +85,7 @@ app.post('/api/login', (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         
+        // Create session
         const sessionId = generateSessionId();
         sessions[sessionId] = {
             userId: user.id,
@@ -121,15 +123,16 @@ app.post('/api/mfa/generate', (req, res) => {
             issuer: 'SecureApp'
         });
         
+        // Store temporary secret in session
         sessions[sessionId].tempSecret = secret.base32;
         
-        // Generate QR code
+        // Generate QR code as PNG instead of SVG
         const qrCode = qr.imageSync(secret.otpauth_url, { type: 'png' });
         
         res.json({
             secret: secret.base32,
             qrCode: qrCode.toString('base64'),
-            qrCodeType: 'png'
+            qrCodeType: 'png' // Add type information
         });
     } catch (error) {
         console.error('MFA generation error:', error);
@@ -150,10 +153,11 @@ app.post('/api/mfa/verify-setup', (req, res) => {
             secret: sessions[sessionId].tempSecret,
             encoding: 'base32',
             token,
-            window: 1
+            window: 2 // Allow 2 time steps (60 seconds) for verification
         });
         
         if (verified) {
+            // Enable MFA for user
             const session = sessions[sessionId];
             const user = users.find(u => u.id === session.userId);
             
@@ -174,7 +178,7 @@ app.post('/api/mfa/verify-setup', (req, res) => {
     }
 });
 
-// Verify MFA login
+// Verify MFA login with extended window
 app.post('/api/mfa/verify-login', (req, res) => {
     try {
         const { sessionId, token } = req.body;
@@ -194,7 +198,7 @@ app.post('/api/mfa/verify-login', (req, res) => {
             secret: user.mfaSecret,
             encoding: 'base32',
             token,
-            window: 1
+            window: 2 // Allow 2 time steps (60 seconds) for verification
         });
         
         if (verified) {
@@ -211,6 +215,79 @@ app.post('/api/mfa/verify-login', (req, res) => {
         }
     } catch (error) {
         console.error('MFA login verification error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Change password
+app.put('/api/user/change-password', (req, res) => {
+    try {
+        const { sessionId, currentPassword, newPassword } = req.body;
+        
+        if (!sessions[sessionId]) {
+            return res.status(401).json({ error: 'Invalid session' });
+        }
+        
+        const user = getUserBySession(sessionId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Verify current password
+        if (user.password !== currentPassword) {
+            return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+        
+        // Update password
+        user.password = newPassword;
+        console.log('Password changed for user:', user.username);
+        
+        res.json({ success: true, message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Reset MFA
+app.post('/api/mfa/reset', (req, res) => {
+    try {
+        const { sessionId } = req.body;
+        
+        if (!sessions[sessionId]) {
+            return res.status(401).json({ error: 'Invalid session' });
+        }
+        
+        const user = getUserBySession(sessionId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Disable MFA and clear secret
+        user.mfaEnabled = false;
+        user.mfaSecret = null;
+        
+        console.log('MFA reset for user:', user.username);
+        res.json({ success: true, message: 'MFA has been reset successfully' });
+    } catch (error) {
+        console.error('MFA reset error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get remaining time for current OTP
+app.get('/api/mfa/remaining-time', (req, res) => {
+    try {
+        const period = 30; // TOTP period in seconds
+        const currentTime = Math.floor(Date.now() / 1000);
+        const remainingTime = period - (currentTime % period);
+        
+        res.json({ 
+            remainingTime,
+            period 
+        });
+    } catch (error) {
+        console.error('Remaining time error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -257,25 +334,34 @@ app.post('/api/logout', (req, res) => {
     }
 });
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'OK', 
+        timestamp: new Date().toISOString(),
+        usersCount: users.length,
+        sessionsCount: Object.keys(sessions).length
+    });
+});
+
 // Helper function to generate session ID
 function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-// Start server
+// Error handling middleware
+app.use((error, req, res, next) => {
+    console.error('Unhandled error:', error);
+    res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({ error: 'Endpoint not found' });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
-    console.log('=== MFA Authentication Server Started ===');
-    console.log(`Server running on port: ${PORT}`);
-    console.log(`Local: http://localhost:${PORT}`);
-    console.log(`Replit: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
-    console.log('=========================================');
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Visit: http://localhost:${PORT}`);
+    console.log('Server is accessible from:', `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
 });
