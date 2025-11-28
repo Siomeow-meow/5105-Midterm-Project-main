@@ -7,7 +7,7 @@ const speakeasy = require('speakeasy');
 const qr = require('qr-image');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware - fix CORS issues
 app.use(cors({
