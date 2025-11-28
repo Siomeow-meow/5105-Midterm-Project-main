@@ -32,7 +32,6 @@ class MFAService {
         return await this.makeRequest('/api/mfa/generate', {
             method: 'POST',
             body: JSON.stringify({ sessionId })
-            
         });
     }
 
